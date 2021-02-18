@@ -1,0 +1,19 @@
+server:
+  port: 8001
+spring:
+  application:
+    name: geotools-server
+  devtools:
+    restart:
+      enabled: true
+
+api:
+  url: http://127.0.0.1:8011/api/share
+  userCode: 123
+  password: ''
+  defaultLimit: 100000
+
+geojson:
+  path: ''
+  drawBordersPath: ''
+  countysPath: ''
