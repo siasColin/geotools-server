@@ -20,8 +20,10 @@ import org.locationtech.jts.geom.*;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.io.WKTReader;
+import org.opengis.feature.Property;
 import org.opengis.feature.simple.SimpleFeature;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.ServletInputStream;
@@ -487,6 +489,65 @@ public class GeoServerController {
             resultInfo = ResultInfo.ofData(ResultCode.SUCCESS,resultMap);
         }catch (Exception e){
             e.printStackTrace();
+        }
+        return resultInfo;
+    }
+
+    @PostMapping(value = "/getAreaCodeByLonLat")
+    @ResponseBody
+    @ApiOperation(value = "根据经纬度获取所属地区信息",response = ResultInfo.class)
+    @ApiImplicitParams({
+            @ApiImplicitParam(name="lon",value="经度",required=true,paramType="query"),
+            @ApiImplicitParam(name="lat",value="纬度",required=true,paramType="query")
+    })
+    public ResultInfo  getAreaInfoByLonLat(String lon,String lat){
+        Map<String,Object> resultMap = new HashMap<String,Object>();
+        ResultInfo resultInfo = ResultInfo.ofData(ResultCode.SUCCESS,resultMap);
+        FileInputStream in = null;
+        try{
+            FeatureJSON featureJSON = new FeatureJSON(new GeometryJSON(6));
+            GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory( null );
+            WKTReader reader = new WKTReader( geometryFactory );
+            File rootFile = new File(countysPath);
+            //获取全省乡镇边界文件列表
+            File[] files = rootFile.listFiles();
+            if(files != null && files.length > 0){
+                StringBuilder wktPointSb = new StringBuilder("POINT(");
+                wktPointSb.append(lon.trim());
+                wktPointSb.append(" ");
+                wktPointSb.append(lat.trim());
+                wktPointSb.append(")");
+                Point point = (Point) reader.read(wktPointSb.toString());
+                first : for (File file : files) {
+                    in = new FileInputStream(file);
+                    SimpleFeatureCollection featureCollection = (SimpleFeatureCollection)featureJSON.readFeatureCollection(in);
+                    SimpleFeatureIterator features = featureCollection.features();
+                    while (features.hasNext()) {
+                        SimpleFeature simpleFeature = features.next();
+                        MultiPolygon areaMultiPolygon = (MultiPolygon) simpleFeature.getDefaultGeometry();
+                        if(areaMultiPolygon.contains(point)){
+                            Collection<? extends Property> properties = simpleFeature.getValue();
+                            for (Property p :properties) {
+                                if(!p.getName().toString().trim().equals("geometry")){
+                                    resultMap.put(p.getName().toString().trim(),p.getValue());
+                                }
+                            }
+                            break first;
+                        }
+                    }
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }finally {
+            if(in != null){
+                try {
+                    in.close();
+                    in = null;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
         return resultInfo;
     }
