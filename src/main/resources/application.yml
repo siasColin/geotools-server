@@ -8,7 +8,7 @@ spring:
       enabled: true
 
 api:
-  url: http://127.0.0.1:8011/api/share
+  url: http://127.0.0.1:8080/api/share
   userCode: 123
   password: ''
   defaultLimit: 100000
