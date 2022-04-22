@@ -1,10 +1,5 @@
 package cn.net.colin.geotoolsdemo;
 
-/*
- * User: chenchong
- * Date: 2019/4/17
- * description:
- */
 
 import cn.net.colin.geotoolsdemo.utils.GeometryUtil;
 import cn.net.colin.geotoolsdemo.utils.JsonUtils;
